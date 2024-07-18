@@ -6,6 +6,7 @@ It has been specifically design to match [Calliope](https://github.com/calliope-
 
 ## Install requirements
 ```console
+pip install enbios==2.2.10
 pip install -r /path/to/requirements.txt
 ```
 ## Create inputs for enbios
