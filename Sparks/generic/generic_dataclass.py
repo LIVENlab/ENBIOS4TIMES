@@ -1,13 +1,13 @@
 from dataclasses import dataclass, field, InitVar
 import bw2data
-from typing import Union, Optional, List,Tuple
+from typing import Union, Optional, List
 import warnings
 import bw2data as bd
 from bw2data.errors import UnknownObject
 from bw2data.backends import Activity, ActivityDataset
-from Sparks.const.const import bw_project
+from Sparks.const.const import bw_project,bw_db
 bd.projects.set_current(bw_project)            # Select your project
-
+database = bd.Database(bw_db)
 
 
 @dataclass
@@ -18,12 +18,9 @@ class BaseFileActivity:
     carrier: str
     parent: str
     code:str
-    full_alias: str
     factor: Union[int, float]
     alias_carrier: Optional[str] = None
     alias_carrier_region: Optional[str] = None
-    alias_carrier_unit: Optional[str]= None
-    alias_carrier_parent_loc: Optional[str] = None
     unit: Optional[str] = None
     init_post: InitVar[bool]=True # Allow to create an instance without calling alias modifications
 
@@ -34,29 +31,17 @@ class BaseFileActivity:
 
         self.alias_carrier = f"{self.name}_{self.carrier}"
         self.alias_carrier_region=f"{self.name}__{self.carrier}___{self.region}"
-        self.alias_carrier_parent_loc =f"{self.alias_carrier}_{self.alias_carrier_parent_loc}"
-        #self.basefile['alias_carrier'] + '__' + self.basefile['File_source']
         self.activity = self._load_activity(key=self.code)
 
-        try:
-            if isinstance(self.activity, Activity):
-                self.unit = self.activity['unit']
-        except:
+        if isinstance(self.activity, Activity):
+            self.unit = self.activity['unit']
+        else:
             self.unit = None
 
 
     def _load_activity(self, key) -> Optional['Activity']:
-
         try:
-            activity=list(ActivityDataset.select().where(ActivityDataset.code == key))
-
-            if len(activity)>1:
-                warnings.warn(f"More than one activity found with code {key}",Warning)
-            if len(activity)<1:
-
-                raise UnknownObject(f'No activity with code {key}')
-            return Activity(activity[0])
-
+            return database.get_node(key)
         except (bw2data.errors.UnknownObject, KeyError):
             message = (f"\n{key} not found in the database. Please check your database / basefile."
                        f"\nThis activity won't be included.")
@@ -69,7 +54,7 @@ class Activity_scenario:
     """ Class for each activity in a specific scenario"""
     alias: str
     amount: int
-    unit: str
+    unit: str #TODO: adapt
 
 
 @dataclass
@@ -125,6 +110,7 @@ class Branch:
 @dataclass
 class Method:
     method: tuple
+
 
     def to_dict(self):
         return {self.method[2].split('(')[1].split(')')[0]: [

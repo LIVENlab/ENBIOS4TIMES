@@ -1,1 +1,2 @@
-bw_project = 'Seeds_exp4'
+bw_project = 'github'
+bw_db = 'ecoinvent'
