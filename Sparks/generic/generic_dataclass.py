@@ -18,9 +18,12 @@ class BaseFileActivity:
     carrier: str
     parent: str
     code:str
+    full_alias: str
     factor: Union[int, float]
     alias_carrier: Optional[str] = None
     alias_carrier_region: Optional[str] = None
+    alias_carrier_unit: Optional[str]= None
+    alias_carrier_parent_loc: Optional[str] = None
     unit: Optional[str] = None
     init_post: InitVar[bool]=True # Allow to create an instance without calling alias modifications
 
@@ -31,6 +34,8 @@ class BaseFileActivity:
 
         self.alias_carrier = f"{self.name}_{self.carrier}"
         self.alias_carrier_region=f"{self.name}__{self.carrier}___{self.region}"
+        self.alias_carrier_parent_loc =f"{self.alias_carrier}_{self.alias_carrier_parent_loc}"
+        #self.basefile['alias_carrier'] + '__' + self.basefile['File_source']
         self.activity = self._load_activity(key=self.code)
 
         try:
@@ -38,6 +43,7 @@ class BaseFileActivity:
                 self.unit = self.activity['unit']
         except:
             self.unit = None
+
 
     def _load_activity(self, key) -> Optional['Activity']:
 

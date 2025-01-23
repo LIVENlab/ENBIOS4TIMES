@@ -51,7 +51,7 @@ class Cleaner:
         Assume that last column corresponds to filename (flow_out_sum etc)
         """
 
-        filename=filename.split('.')[0]
+        filename = filename.split('.')[0]
         expected_cols = {'spores',
                          'techs',
                          'locs',
@@ -64,7 +64,11 @@ class Cleaner:
 
         try:
             tr = data[list(expected_cols)]
-            return data.rename(columns={filename: 'energy_value'})
+            data.rename(columns={filename: 'energy_value'}, inplace=True)
+            data['filename'] = filename
+
+            return data
+
 
         except KeyError:
             raise KeyError(f"Columns {data.columns} do not match the expected columns: {expected_cols}")
@@ -76,13 +80,20 @@ class Cleaner:
         """
         df_names=df.copy()
         # Filter Processors
-        df_names['alias_carrier']=df_names['techs'] + '_' + df_names['carriers']
-        df_names['alias_region']=df_names['alias_carrier'] + '_' + df_names['locs']
+        df_names['alias_carrier'] = df_names['techs'] + '_' + df_names['carriers']
+        df_names['alias_filename'] = df_names['alias_carrier']+ '__' + df_names['filename']
+        df_names['full_name'] = df_names['alias_filename'] + '___' + df_names['locs']
+        df_names = self._manage_regions(df_names)
+        df_names['alias_filename']=df_names['alias_filename']+'___' + df_names['countries']
 
         if self._edited is False:
             self.basefile = pd.read_excel(self.mother_file, sheet_name='Processors').dropna(subset=['Ecoinvent_key_code'])
             self.basefile['alias_carrier'] = self.basefile['Processor'] + '_' + self.basefile['@SimulationCarrier']
-            self.basefile['alias_region'] = self.basefile['alias_carrier']+'_'+self.basefile['Region']
+            #self.basefile['alias_region'] = self.basefile['alias_carrier']+'_'+self.basefile['Region']
+            self.basefile['alias_filename'] = self.basefile['alias_carrier']+'__'+self.basefile['File_source']
+            self.basefile['alias_filename']=self.basefile['alias_filename'].str.split('.').str[0]
+            #TODO: redundant to get it trhough
+            self.basefile['alias_filename_loc'] = self.basefile['alias_filename'] + '___' + self.basefile['Region']
             self._edited = True
 
         basefile = self.basefile.loc[self.basefile['File_source'] == filter]
@@ -90,6 +101,7 @@ class Cleaner:
 
         excluded_techs = set(df_names['alias_carrier']) - set(basefile['alias_carrier'])
         self.techs_region_not_included=excluded_techs
+        pass
         df_names = df_names[~df_names['alias_carrier'].isin(excluded_techs)] # exclude the technologies
 
         if excluded_techs:
@@ -107,7 +119,6 @@ class Cleaner:
         """
 
         if self.national:
-
             df['locs'] = df['locs'].str.split('_').str[0].str.split('-').str[0]
             grouped_df = df.groupby(['alias_carrier', "locs", 'unit'], as_index=False).agg({
                 'energy_value': 'sum',
@@ -118,10 +129,30 @@ class Cleaner:
             })
 
         else:
-            grouped_df = df.groupby(['spores', 'techs', 'carriers', 'unit', 'locs', 'alias_carrier'], as_index=False).agg({
+            pass
+            grouped_df = df.groupby(['spores',
+                                     'techs',
+                                     'carriers',
+                                     'unit',
+                                     'locs',
+                                     'alias_carrier',
+                                     'alias_filename',
+                                     'full_name'
+                                     ], as_index=False).agg({
                 'energy_value': 'sum'
             })
         return grouped_df
+
+
+    @staticmethod
+    def _manage_regions(df:pd.DataFrame)-> pd.DataFrame:
+        """
+        Edit the regions format strings in order to get general country names
+        """
+        df['countries'] = [x.split('_')[0].split('-')[0]
+                     for x in df['locs']]
+        return df
+
 
 
     def preprocess_data(self)->pd.DataFrame:
@@ -132,6 +163,7 @@ class Cleaner:
         grouped = self.basefile.groupby('File_source')
 
         for data_source, group in grouped:
+            pass #TODO: ADD A COLUMN WITH THE FILE NAME
             if pd.isna(data_source):
                 warnings.warn(f"DataSource is missing for some entries. Skipping these entries.", Warning)
                 continue
@@ -146,6 +178,8 @@ class Cleaner:
                 warnings.warn(f"Error processing {data_source}: {e}", Warning)
 
         self.final_df = self._group_data(all_data)
+        self.final_df = self._manage_regions(self.final_df)
+        pass
         return self.final_df
 
 
@@ -159,9 +193,10 @@ class Cleaner:
                         name=r['Processor'],
                         carrier=r['@SimulationCarrier'],
                         parent=r['ParentProcessor'],
-                        region= r['Region'],
+                        region=r['Region'],
                         code=r['Ecoinvent_key_code'],
-                        factor=r['@SimulationToEcoinventFactor']
+                        factor=r['@SimulationToEcoinventFactor'],
+                        full_alias=r['alias_filename_loc']
                     )
                 )
             except: #TODO: better handle this
@@ -174,11 +209,11 @@ class Cleaner:
         """adapt the units (flow_out_sum * conversion factor)"""
 
         self.base_activities = self._extract_data()
-        alias_to_factor = {x.alias_carrier: x.factor for x in self.base_activities}
-        unit_to_factor = {x.alias_carrier: x.unit for x in self.base_activities}
+        alias_to_factor = {x.full_alias: x.factor for x in self.base_activities}
+        unit_to_factor = {x.full_alias: x.unit for x in self.base_activities}
 
-        self.final_df['new_vals'] = self.final_df['alias_carrier'].map(alias_to_factor) * self.final_df['energy_value']
-        self.final_df['new_units'] = self.final_df['alias_carrier'].map(unit_to_factor)
+        self.final_df['new_vals'] = self.final_df['alias_filename'].map(alias_to_factor) * self.final_df['energy_value']
+        self.final_df['new_units'] = self.final_df['alias_filename'].map(unit_to_factor)
         return self._final_dataframe(self.final_df)
 
 
@@ -187,15 +222,17 @@ class Cleaner:
         cols = ['spores',
                 'locs',
                 'techs',
+                'full_name',
                 'carriers',
                 'new_units',
                 'new_vals']
-
+        pass
         df.dropna(axis=0, inplace=True)
         df = df[cols]
         df.rename(columns={'spores': 'scenarios', 'new_vals': 'energy_value'}, inplace=True)
         df['aliases'] = df['techs'] + '__' + df['carriers'] + '___' + df['locs']
-        self._techs_sublocations = df['aliases'].unique().tolist()  # save sublocation aliases for hierarchy
+        self._techs_sublocations = df['full_name'].unique().tolist()  # save sublocation aliases for hierarchy
+        pass
         return df
 
 

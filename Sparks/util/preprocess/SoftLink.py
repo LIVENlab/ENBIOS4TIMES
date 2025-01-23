@@ -56,7 +56,7 @@ class SoftLinkCalEnb():
             Scenario(name=str(scenario),
                      activities=[
                          Activity_scenario(
-                             alias=row['aliases'],
+                             alias=row['full_name'],
                              amount=row['energy_value'],
                              unit=row['new_units']
                          )
@@ -111,7 +111,8 @@ class Hierarchy:
     def _create_copies(self,
                        existing_act: BaseFileActivity,
                        new_names: [List[str]])->List[BaseFileActivity]:
-            """ Pass a the name of an existing BasefileAct, a list of new names, and return a list of copies"""
+            """ Pass a the name of an existing BasefileAct,
+             a list of new names, and return a list of copies"""
 
             copies=[]
             for new_name in new_names:
