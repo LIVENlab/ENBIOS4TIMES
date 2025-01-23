@@ -133,7 +133,7 @@ class SoftLink():
         self.SoftLink=SoftLinkCalEnb(calliope=self.preprocessed_units,
                                      motherfile=self.mother,
                                      mother_data=self._cleaner.base_activities,
-                                     sublocations=self._cleaner._techs_sublocations,
+                                     sublocations= self._cleaner._techs_sublocations,
                                      smaller_vers=smaller_vers)
 
         self.SoftLink.run(path_save)
