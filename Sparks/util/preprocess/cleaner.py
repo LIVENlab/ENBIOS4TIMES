@@ -86,29 +86,24 @@ class Cleaner:
         df_names = self._manage_regions(df_names)
         df_names['alias_filename']=df_names['alias_filename']+'___' + df_names['countries']
 
+
         if self._edited is False:
             self.basefile = pd.read_excel(self.mother_file, sheet_name='Processors').dropna(subset=['Ecoinvent_key_code'])
             self.basefile['alias_carrier'] = self.basefile['Processor'] + '_' + self.basefile['@SimulationCarrier']
             #self.basefile['alias_region'] = self.basefile['alias_carrier']+'_'+self.basefile['Region']
             self.basefile['alias_filename'] = self.basefile['alias_carrier']+'__'+self.basefile['File_source']
-            self.basefile['alias_filename']=self.basefile['alias_filename'].str.split('.').str[0]
+            self.basefile['alias_filename'] = self.basefile['alias_filename'].str.split('.').str[0]
             #TODO: redundant to get it trhough
             self.basefile['alias_filename_loc'] = self.basefile['alias_filename'] + '___' + self.basefile['Region']
             self._edited = True
 
+
         basefile = self.basefile.loc[self.basefile['File_source'] == filter]
-
-
         excluded_techs = set(df_names['alias_carrier']) - set(basefile['alias_carrier'])
         self.techs_region_not_included=excluded_techs
-        pass
+
         df_names = df_names[~df_names['alias_carrier'].isin(excluded_techs)] # exclude the technologies
 
-        if excluded_techs:
-            message=f'''\nThe following technologies, are present in the energy data but not in the Basefile: 
-            \n{excluded_techs}
-            \n Please,check the following items in order to avoid missing information'''
-            warnings.warn(message,Warning)
         return df_names
 
 
@@ -177,9 +172,21 @@ class Cleaner:
             except Exception as e:
                 warnings.warn(f"Error processing {data_source}: {e}", Warning)
 
+        if len(self.techs_region_not_included)>1:
+            formatted_items = "\n".join(f"    - {item}" for item in self.techs_region_not_included)
+            message = f"""\nThe following technologies are present in the energy data but not in the Basefile: 
+            {formatted_items}
+
+            Please, check the following items to avoid missing information."""
+            warnings.warn(message, Warning)
+
         self.final_df = self._group_data(all_data)
         self.final_df = self._manage_regions(self.final_df)
+
         pass
+
+
+
         return self.final_df
 
 
@@ -226,13 +233,13 @@ class Cleaner:
                 'carriers',
                 'new_units',
                 'new_vals']
-        pass
+
         df.dropna(axis=0, inplace=True)
         df = df[cols]
         df.rename(columns={'spores': 'scenarios', 'new_vals': 'energy_value'}, inplace=True)
         df['aliases'] = df['techs'] + '__' + df['carriers'] + '___' + df['locs']
         self._techs_sublocations = df['full_name'].unique().tolist()  # save sublocation aliases for hierarchy
-        pass
+
         return df
 
 
