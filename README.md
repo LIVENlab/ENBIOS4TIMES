@@ -18,6 +18,7 @@ You can generate the JSON input file by running the demo_test.py script. If you 
 
 ## Install requirements
 ```console
+pip install enbios==2.2.10
 pip install -r /path/to/requirements.txt
 ```
 ## Create inputs for enbios
