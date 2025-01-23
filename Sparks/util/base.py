@@ -109,7 +109,8 @@ class SoftLink():
 
         """
         # Create an instance of the Cleaner class
-
+        if national:
+            raise NotImplementedError('This function has not been implemented yet')
 
         self._cleaner = Cleaner(
                 motherfile=self.paths_dict['basefile.xlsx'],

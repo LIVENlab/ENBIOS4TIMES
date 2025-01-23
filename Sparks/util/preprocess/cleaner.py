@@ -114,8 +114,9 @@ class Cleaner:
         """
 
         if self.national:
+            pass
             df['locs'] = df['locs'].str.split('_').str[0].str.split('-').str[0]
-            grouped_df = df.groupby(['alias_carrier', "locs", 'unit'], as_index=False).agg({
+            grouped_df = df.groupby(['alias_filename', "locs", 'unit'], as_index=False).agg({
                 'energy_value': 'sum',
                 'spores': 'first',
                 'techs': 'first',
@@ -149,7 +150,6 @@ class Cleaner:
         return df
 
 
-
     def preprocess_data(self)->pd.DataFrame:
         """Run data preprocessing steps"""
 
@@ -172,7 +172,7 @@ class Cleaner:
             except Exception as e:
                 warnings.warn(f"Error processing {data_source}: {e}", Warning)
 
-        if len(self.techs_region_not_included)>1:
+        if len(self.techs_region_not_included) > 1:
             formatted_items = "\n".join(f"    - {item}" for item in self.techs_region_not_included)
             message = f"""\nThe following technologies are present in the energy data but not in the Basefile: 
             {formatted_items}
@@ -182,10 +182,6 @@ class Cleaner:
 
         self.final_df = self._group_data(all_data)
         self.final_df = self._manage_regions(self.final_df)
-
-        pass
-
-
 
         return self.final_df
 
@@ -206,7 +202,7 @@ class Cleaner:
                         full_alias=r['alias_filename_loc']
                     )
                 )
-            except: #TODO: better handle this
+            except:
                 continue
 
         return [activity for activity in base_activities if activity.unit is not None]
@@ -235,6 +231,10 @@ class Cleaner:
                 'new_vals']
 
         df.dropna(axis=0, inplace=True)
+        pass
+        if self.national:
+            df.rename(columns={'alias_filename' : 'full_name'}, inplace=True)
+            
         df = df[cols]
         df.rename(columns={'spores': 'scenarios', 'new_vals': 'energy_value'}, inplace=True)
         df['aliases'] = df['techs'] + '__' + df['carriers'] + '___' + df['locs']
