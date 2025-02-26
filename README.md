@@ -1,5 +1,5 @@
 # ENBIOS application for the TIMES-Sinergia Model (TIMES Spain)
-This repository contains the code to run ENBIOS for energy scenarios generated with the TIMES-Sinergia model for Spain. 
+This repository contains the code to run ENBIOS for energy scenarios generated with the TIMES-Sinergia model for Spain. it is an output of the project Living lab for energy and environmental modelling and planning (LIVEN), funded by the Spanish Research Agency (PID2020-119565RJ-I00)
 
 The TIMES-Sinergia model is the Spanish TIMES version. 
 CARLOS PORFA UPDATE THIS
