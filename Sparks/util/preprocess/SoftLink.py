@@ -145,7 +145,7 @@ class Hierarchy:
         final_list=[]
         for act in self.motherdata:
             new_names= [x for x in self.subloc if act.alias_carrier_region in str(x)]
-            copies=self._create_copies(act,new_names)
+            copies = self._create_copies(act,new_names)
             final_list.extend(copies)
 
         return final_list

@@ -30,6 +30,7 @@ class BaseFileActivity:
             return
         pass
         self.code=eval(self.code)[1]
+        pass
         self.alias_carrier = f"{self.name}_{self.carrier}"
         self.alias_carrier_region=f"{self.name}__{self.carrier}"
         self.activity = self._load_activity(key=self.code)
@@ -70,8 +71,7 @@ class Scenario:
         self.activities_dict = {x.alias: [
             x.unit,x.amount
         ] for x in self.activities}
-        for x in self.activities:
-            print(type(x.unit), type(x.amount))
+
 
     def to_dict(self):
         return {'name': self.name, 'nodes':self.activities_dict}

@@ -116,7 +116,7 @@ class Cleaner:
         excluded_techs = set(df_names['Process']) - set(self.basefile['Processor'])
         self.techs_region_not_included=excluded_techs
         df_names = df_names[~df_names['Process'].isin(excluded_techs)] # exclude the technologies
-
+        pass
         if excluded_techs:
             message=f'''\nThe following technologies, are present in the energy data but not in the Basefile: 
             \n{excluded_techs}
@@ -145,14 +145,14 @@ class Cleaner:
                 )
             )
         pass
-        return  [activity for activity in base_activities if activity.unit is not None]
+        return [activity for activity in base_activities if activity.unit is not None]
 
 
     def _adapt_units(self):
         """adapt the units (flow_out_sum * conversion factor)"""
 
         self.base_activities=self._extract_data()
-
+        pass
         alias_to_factor = {x.alias_carrier: x.factor for x in self.base_activities}
         unit_to_factor = {x.alias_carrier: x.unit for x in self.base_activities}
 

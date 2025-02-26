@@ -1,4 +1,5 @@
 import enbios as enb
-exp = enb.Experiment(r'hey path here')
+exp = enb.Experiment(r'test2.json')
 exp.run()
+
 
